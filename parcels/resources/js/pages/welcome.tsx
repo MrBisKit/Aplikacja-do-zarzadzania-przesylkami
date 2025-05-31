@@ -34,43 +34,34 @@ export default function Welcome() {
                 </header>
                 <div className="flex w-full items-center justify-center opacity-100 transition-opacity duration-750 lg:grow starting:opacity-0">
                     <main className="flex w-full max-w-[335px] flex-col-reverse lg:max-w-4xl lg:flex-row justify-center">
-                        <div className="flex-1 rounded-br-lg rounded-bl-lg bg-white p-12 text-[13px] leading-[20px] shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] lg:rounded-tl-lg lg:rounded-br-none lg:p-20 dark:bg-[#161615] dark:text-[#EDEDEC] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] flex flex-col justify-center">
-                            <div className="flex items-center justify-center"><AppLogo /></div>
-                            <h1 className="text-3xl font-bold mb-4 text-[#f53003] dark:text-[#FF4433]">Track Every Delivery, Elevate Your Service</h1>
-                            <p className="mb-6 text-[#706f6c] dark:text-[#A1A09A] text-lg">
+                        <div className="flex-1 gap-4 rounded-br-lg rounded-bl-lg bg-white p-6 text-[13px] leading-[20px] shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] lg:rounded-tl-lg lg:rounded-br-none lg:p-20 dark:bg-[#161615] dark:text-[#EDEDEC] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] flex flex-col justify-center">
+                            <div className="flex items-center justify-center gap-2"><AppLogo /></div>
+                            <h1 className="font-medium">Track Every Delivery, Elevate Your Service</h1>
+                            <p className="text-[#706f6c] dark:text-[#A1A09A]">
                                 Parcels provides courier companies with a powerful, intuitive platform to streamline package tracking and delivery management.
                             </p>
-                            <div className="mb-8">
-                                <h2 className="text-xl font-medium mb-3">Why Choose Parcels?</h2>
-                                <ul className="space-y-3 mb-6">
-                                    <li className="flex items-center gap-2">
-                                        <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[#f53003] dark:bg-[#FF4433] flex items-center justify-center text-white">✓</span>
-                                        <span>Real-time tracking with live updates</span>
-                                    </li>
-                                    <li className="flex items-center gap-2">
-                                        <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[#f53003] dark:bg-[#FF4433] flex items-center justify-center text-white">✓</span>
-                                        <span>Multi-role access for admins, couriers, and warehouse staff</span>
-                                    </li>
-                                    <li className="flex items-center gap-2">
-                                        <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[#f53003] dark:bg-[#FF4433] flex items-center justify-center text-white">✓</span>
-                                        <span>Optimized route planning and delivery scheduling</span>
-                                    </li>
-                                </ul>
-                            </div>
-                            <div className="flex gap-4 text-sm leading-normal">
-                                <a
-                                    href="#"
-                                    className="inline-block rounded-sm border border-[#f53003] bg-[#f53003] px-5 py-2 text-sm font-medium text-white hover:bg-[#d62a00] transition-colors duration-200 dark:border-[#FF4433] dark:bg-[#FF4433] dark:hover:bg-[#e53b2b]"
-                                >
-                                    Get Started
-                                </a>
-                                <a
-                                    href="#"
-                                    className="inline-block rounded-sm border border-[#1b1b18] px-5 py-2 text-sm font-medium hover:bg-[#f8f8f7] transition-colors duration-200 dark:border-[#eeeeec] dark:text-[#eeeeec] dark:hover:bg-[#252523]"
-                                >
-                                    Learn More
-                                </a>
-                            </div>
+                            <ul className="flex flex-col">
+                                <li className="relative flex items-center gap-4 py-2 before:absolute before:top-1/2 before:bottom-0 before:left-[0.4rem] before:border-l before:border-[#e3e3e0] dark:before:border-[#3E3E3A]">
+                                    <span className="relative bg-white py-1 dark:bg-[#161615]">
+                                        <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full border border-[#e3e3e0] bg-[#FDFDFC] shadow-[0px_0px_1px_0px_rgba(0,0,0,0.03),0px_1px_2px_0px_rgba(0,0,0,0.06)] dark:border-[#3E3E3A] dark:bg-[#161615]">
+                                            <span className="h-1.5 w-1.5 rounded-full bg-[#dbdbd7] dark:bg-[#3E3E3A]" />
+                                        </span>
+                                    </span>
+                                    <span>
+                                    Real-time tracking with live updates
+                                    </span>
+                                </li>
+                                <li className="relative flex items-center gap-4 py-2 before:absolute before:top-0 before:bottom-1/2 before:left-[0.4rem] before:border-l before:border-[#e3e3e0] dark:before:border-[#3E3E3A]">
+                                    <span className="relative bg-white py-1 dark:bg-[#161615]">
+                                        <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full border border-[#e3e3e0] bg-[#FDFDFC] shadow-[0px_0px_1px_0px_rgba(0,0,0,0.03),0px_1px_2px_0px_rgba(0,0,0,0.06)] dark:border-[#3E3E3A] dark:bg-[#161615]">
+                                            <span className="h-1.5 w-1.5 rounded-full bg-[#dbdbd7] dark:bg-[#3E3E3A]" />
+                                        </span>
+                                    </span>
+                                    <span>
+                                    Optimized delivery scheduling
+                                    </span>
+                                </li>
+                            </ul>
                         </div>
                         <div className="relative w-full lg:w-[438px] aspect-square overflow-hidden rounded-t-lg lg:mb-0 lg:-ml-px lg:rounded-t-none lg:rounded-r-lg flex items-center justify-center">
                             <div className="w-full h-full flex items-center justify-center">
