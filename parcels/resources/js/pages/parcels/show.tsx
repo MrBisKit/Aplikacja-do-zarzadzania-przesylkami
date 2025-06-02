@@ -43,6 +43,7 @@ export default function ParcelShow({ parcel }: ParcelShowProps) {
                         <div className="ml-auto flex gap-4">
                             <Button
                                 variant="default"
+                                size="default"
                                 onClick={() => {
                                     setIsGeneratingLabel(true);
                                     window.open(route('parcels.label', parcel.id), '_blank');
@@ -63,7 +64,7 @@ export default function ParcelShow({ parcel }: ParcelShowProps) {
                                 )}
                             </Button>
                             <Link href={route('parcels.index')}>
-                            <Button variant="outline">
+                            <Button variant="outline" size="default">
                                 <ArrowLeftIcon className="mr-2 h-4 w-4" />
                                 Back to Parcels
                             </Button>

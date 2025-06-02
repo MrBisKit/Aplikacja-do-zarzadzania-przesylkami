@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ArrowLeftIcon } from 'lucide-react';
 import {
     Select,
     SelectContent,
@@ -102,15 +103,23 @@ export default function ParcelCreate({ statuses, couriers, customers }: ParcelCr
         >
             <Head title="Add New Parcel" />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-3xl sm:px-6 lg:px-8">
-                    <Card>
+            <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Add New Parcel</h1>
+                    <Link href={route('parcels.index')}>
+                            <Button variant="outline" size="default">
+                                <ArrowLeftIcon className="mr-2 h-4 w-4" />
+                                Back to Parcels
+                            </Button>
+                        </Link>
+                </div>
+                <Card>
                         <CardHeader>
-                            <CardTitle>Add New Parcel</CardTitle>
+                            <CardTitle>New Parcel Details</CardTitle>
                         </CardHeader>
                         <form onSubmit={handleSubmit}>
                             <CardContent className="space-y-6">
-                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                <div>
                                     {/* Tracking Number input removed, will be auto-generated */}
                                     <div>
                                         <Label htmlFor="status">Status*</Label>
@@ -130,8 +139,8 @@ export default function ParcelCreate({ statuses, couriers, customers }: ParcelCr
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                    <div>
+                                <div className="flex gap-6 items-end">
+                                    <div className="w-1/2">
                                         <Label htmlFor="customer_id">Select Customer</Label>
                                         <Select value={data.customer_id} onValueChange={handleCustomerChange}>
                                             <SelectTrigger id="customer_id">
@@ -152,7 +161,7 @@ export default function ParcelCreate({ statuses, couriers, customers }: ParcelCr
                                         <Button 
                                             type="button" 
                                             variant="outline" 
-                                            size="sm"
+                                            size="default"
                                             onClick={() => window.open(route('customers.create'), '_blank')}
                                         >
                                             Add New Customer
@@ -246,7 +255,7 @@ export default function ParcelCreate({ statuses, couriers, customers }: ParcelCr
                                 </div>
 
                                 <h3 className="text-lg font-medium text-gray-900 dark:text-white">Assignment (Optional)</h3>
-                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 mb-6">
                                     <div>
                                         <Label htmlFor="user_id">Courier (Optional)</Label>
                                         <Select value={data.user_id} onValueChange={(value) => setData('user_id', value)}>
@@ -276,7 +285,7 @@ export default function ParcelCreate({ statuses, couriers, customers }: ParcelCr
                                 </div>
 
                             </CardContent>
-                            <CardFooter className="flex justify-end space-x-2 border-t px-6 py-4">
+                            <CardFooter className="flex justify-end space-x-2 border-t px-6 pt-6">
                                 <Link href={route('parcels.index')}>
                                     <Button type="button" variant="outline">Cancel</Button>
                                 </Link>
@@ -285,7 +294,6 @@ export default function ParcelCreate({ statuses, couriers, customers }: ParcelCr
                         </form>
                     </Card>
                 </div>
-            </div>
         </AppLayout>
     );
 }

@@ -1,11 +1,12 @@
 import { type BreadcrumbItem, type Customer } from '@/types';
 import AppLayout from '@/layouts/app-layout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, Link } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { ArrowLeftIcon } from 'lucide-react';
 
 interface CustomerEditProps {
     customer: Customer;
@@ -49,13 +50,21 @@ export default function CustomerEdit({ customer }: CustomerEditProps) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Edit Customer: ${customer.name}`} />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-3xl sm:px-6 lg:px-8">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Edit Customer: {customer.name}</CardTitle>
-                        </CardHeader>
-                        <form onSubmit={handleSubmit}>
+            <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Edit Customer</h1>
+                    <Link href={route('customers.show', customer.id)}>
+                        <Button variant="outline" size="default">
+                            <ArrowLeftIcon className="mr-2 h-4 w-4" />
+                            Back to Customer
+                        </Button>
+                    </Link>
+                </div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Customer Details: {customer.name}</CardTitle>
+                    </CardHeader>
+                    <form onSubmit={handleSubmit}>
                             <CardContent className="space-y-6">
                                 <div className="grid grid-cols-1 gap-6">
                                     <div>
@@ -89,22 +98,19 @@ export default function CustomerEdit({ customer }: CustomerEditProps) {
                                     {errors.phone_number && <p className="mt-1 text-xs text-red-500">{errors.phone_number}</p>}
                                 </div>
                             </CardContent>
-                            <CardFooter className="flex justify-end space-x-2">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => window.history.back()}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button type="submit" disabled={processing}>
+                            <CardFooter className="flex justify-end space-x-2 border-t px-6 pt-6">
+                                <Link href={route('customers.show', customer.id)}>
+                                    <Button type="button" variant="outline" size="default">
+                                        Cancel
+                                    </Button>
+                                </Link>
+                                <Button type="submit" disabled={processing} size="default">
                                     Update Customer
                                 </Button>
                             </CardFooter>
                         </form>
                     </Card>
                 </div>
-            </div>
         </AppLayout>
     );
 }
