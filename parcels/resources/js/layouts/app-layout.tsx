@@ -8,6 +8,7 @@ import { usePage } from '@inertiajs/react';
 interface AppLayoutProps {
     children: ReactNode;
     breadcrumbs?: BreadcrumbItem[];
+    title?: string; // Added title prop
 }
 
 export default ({ children, breadcrumbs, ...props }: AppLayoutProps) => {

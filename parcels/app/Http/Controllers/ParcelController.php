@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Parcel;
-use App\Models\User; // Add User model import
+use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Milon\Barcode\Facades\DNS1DFacade;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str; // For Str::random()
 use Inertia\Inertia;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
@@ -103,8 +106,76 @@ class ParcelController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Parcel $parcel)
+    public function destroy(Parcel $parcel): RedirectResponse
     {
-        //
+        // Optional: Add authorization checks here if needed
+        // For example, if you have policies:
+        // $this->authorize('delete', $parcel);
+
+        $parcel->delete();
+
+        return redirect()->route('parcels.index')->with('success', 'Parcel deleted successfully.');
+        // Alternatively, using the Redirect facade:
+        // return \Illuminate\Support\Facades\Redirect::route('parcels.index')->with('success', 'Parcel deleted successfully.');
+    }
+
+    /**
+     * Generate a PDF label for the specified parcel.
+     */
+    public function generateLabel(Parcel $parcel)
+    {
+
+
+        // Eager load any relationships if needed for the label, though parcel object should have most direct attributes
+        // $parcel->load(['sender', 'recipient']); // Example, if sender/recipient were complex objects
+
+        // Generate barcode
+        // Parameters for getBarcodePNG: value, type, widthFactor, height, color (array [r,g,b])
+        // Using C128 which is a common standard for labels.
+        $barcodeImage = DNS1DFacade::getBarcodePNG($parcel->tracking_number, 'C128', 2, 60, [0, 0, 0]);
+
+        // $barcodeImage is already base64 encoded by DNS1DFacade::getBarcodePNG()
+        // No need for base64_encode() here.
+
+        $data = [
+            'parcel' => $parcel,
+            'barcode' => $barcodeImage, // Pass the already base64 encoded string directly
+        ];
+
+        $pdf = Pdf::loadView('parcels.label', $data);
+
+        // Use $pdf->output() to get the raw PDF content
+        $pdfOutput = $pdf->output();
+
+        // Return a response with explicit headers
+        return response($pdfOutput, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="label-' . $parcel->tracking_number . '.pdf"',
+        ]);
+    }
+
+
+    /**
+     * Provide public tracking information for a parcel.
+     *
+     * @param  string  $tracking_number
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function trackPublic($tracking_number)
+    {
+        $parcel = \App\Models\Parcel::where('tracking_number', $tracking_number)->first();
+
+        if (!$parcel) {
+            return response()->json(['message' => 'Parcel not found.'], 404);
+        }
+
+        return response()->json([
+            'tracking_number' => $parcel->tracking_number,
+            'status' => $parcel->status,
+            'weight' => $parcel->weight,
+            'dimensions' => $parcel->dimensions, // Assuming dimensions is a string like 'LxWxH'
+            'created_at' => $parcel->created_at->toIso8601String(),
+            'updated_at' => $parcel->updated_at->toIso8601String(),
+        ]);
     }
 }
