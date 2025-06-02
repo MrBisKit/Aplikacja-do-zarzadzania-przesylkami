@@ -33,10 +33,10 @@ class Parcel extends Model
     }
 
     /**
-     * Get the customer (user) associated with this parcel.
+     * Get the customer associated with this parcel.
      */
     public function customer()
     {
-        return $this->belongsTo(User::class, 'customer_id');
+        return $this->belongsTo(Customer::class, 'customer_id');
     }
 }

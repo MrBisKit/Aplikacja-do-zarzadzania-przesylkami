@@ -1,20 +1,11 @@
+import { type BreadcrumbItem, type Customer } from '@/types';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router } from '@inertiajs/react';
 import React from 'react';
-import { Parcel, PaginatedData, User } from '@/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import { PlusCircle, MoreHorizontal, Pencil, Trash2, Eye } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -37,91 +28,63 @@ import {
 import { useState } from 'react';
 import Pagination from '@/components/pagination'; // Assuming this component exists
 
-interface ParcelsIndexProps {
-    parcels: PaginatedData<Parcel>;
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Customers',
+        href: route('customers.index'),
+    },
+];
+
+interface CustomersIndexProps {
+    customers: {
+        data: Customer[];
+        links: {
+            url: string | null;
+            label: string;
+            active: boolean;
+        }[];
+        // Other pagination data
+    };
 }
 
-export default function ParcelsIndex({ parcels }: ParcelsIndexProps) {
-    const [parcelToDelete, setParcelToDelete] = useState<Parcel | null>(null);
-
-    const breadcrumbs = [
-        { title: 'Parcels', href: route('parcels.index') },
-    ];
-
-    const handleDeleteParcel = () => {
-        if (parcelToDelete) {
-            console.log('Attempting to delete parcel ID:', parcelToDelete.id);
-            router.delete(route('parcels.destroy', parcelToDelete.id), {
-                preserveScroll: true,
-                onSuccess: () => {
-                    console.log('Parcel deletion successful for ID:', parcelToDelete.id);
-                    // Toast notification for success can go here (e.g., toast.success('Parcel deleted!'))
-                },
-                onError: (errors) => {
-                    console.error('Parcel deletion failed for ID:', parcelToDelete.id, 'Errors:', errors);
-                    // Toast notification for error can go here (e.g., toast.error('Failed to delete parcel.'))
-                },
-                onFinish: () => {
-                    console.log('Inertia delete request finished for parcel ID:', parcelToDelete?.id);
-                    setParcelToDelete(null); // Crucial: Ensure dialog state is reset AFTER request completion
-                }
-            });
-        } else {
-            console.warn('handleDeleteParcel called but parcelToDelete is null');
-        }
-    };
+export default function CustomersIndex({ customers }: CustomersIndexProps) {
     return (
-        <AppLayout title="Parcels" breadcrumbs={breadcrumbs}>
-            <Head title="Parcels" />
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title="Customers" />
             <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Parcels</h1>
-                    <Link href={route('parcels.create')}>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Customers</h1>
+                    <Link href={route('customers.create')}>
                         <Button>
-                            <PlusCircle className="mr-2 h-4 w-4" /> Add Parcel
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add Customer
                         </Button>
                     </Link>
                 </div>
 
-                <Card className="shadow-lg">
+                <Card>
                     <CardHeader>
-                        <CardTitle>Parcel List</CardTitle>
-                        <CardDescription>
-                            A list of all parcels in the system.
-                        </CardDescription>
+                        <CardTitle>Manage Customers</CardTitle>
+                        <CardDescription>View and manage your customer database.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Tracking #</TableHead>
-                                    <TableHead>Customer</TableHead>
-                                    <TableHead>Courier</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Created At</TableHead>
+                                    <TableHead className="w-[80px]">ID</TableHead>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead>Address</TableHead>
+                                    <TableHead>Phone Number</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {parcels.data.length > 0 ? (
-                                    parcels.data.map((parcel) => (
-                                        <TableRow key={parcel.id}>
-                                            <TableCell className="font-medium">{parcel.tracking_number}</TableCell>
-                                            <TableCell>{parcel.customer?.name}</TableCell>
-                                            <TableCell>{parcel.courier ? parcel.courier.name : 'N/A'}</TableCell>
-                                            <TableCell>
-                                                <Badge variant={parcel.status === 'delivered' ? 'default' : (parcel.status === 'pending' ? 'secondary' : 'outline') } 
-                                                       className={cn({
-                                                        'bg-green-500 text-white dark:bg-green-600 dark:text-gray-100': parcel.status === 'delivered',
-                                                        'bg-yellow-400 text-gray-800 dark:bg-yellow-500 dark:text-gray-900': parcel.status === 'in_transit',
-                                                        'bg-blue-500 text-white dark:bg-blue-600 dark:text-gray-100': parcel.status === 'out_for_delivery',
-                                                        'bg-gray-300 text-gray-700 dark:bg-gray-600 dark:text-gray-200': parcel.status === 'pending',
-                                                       })}
-                                                >
-                                                    {parcel.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell>{new Date(parcel.created_at).toLocaleDateString()}</TableCell>
+                                {customers.data.length > 0 ? (
+                                    customers.data.map((customer) => (
+                                        <TableRow key={customer.id}>
+                                            <TableCell className="font-medium">{customer.id}</TableCell>
+                                            <TableCell>{customer.name}</TableCell>
+                                            <TableCell>{customer.address}</TableCell>
+                                            <TableCell>{customer.phone_number || 'N/A'}</TableCell>
                                             <TableCell className="text-right">
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
@@ -131,12 +94,12 @@ export default function ParcelsIndex({ parcels }: ParcelsIndexProps) {
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem onSelect={() => router.get(route('parcels.show', parcel.id))}
+                                                        <DropdownMenuItem onSelect={() => router.get(route('customers.show', customer.id))}
                                                             className="flex items-center w-full cursor-pointer"
                                                         >
                                                             <Eye className="mr-2 h-4 w-4" /> View
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem onSelect={() => router.get(route('parcels.edit', parcel.id))}
+                                                        <DropdownMenuItem onSelect={() => router.get(route('customers.edit', customer.id))}
                                                             className="flex items-center w-full cursor-pointer"
                                                         >
                                                             <Pencil className="mr-2 h-4 w-4" /> Edit
@@ -166,26 +129,26 @@ export default function ParcelsIndex({ parcels }: ParcelsIndexProps) {
                                                                         <AlertDialogHeader>
                                                                             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                                                             <AlertDialogDescription>
-                                                                                This action cannot be undone. This will permanently delete the parcel{' '}
-                                                                                <strong className='px-1'>{parcel.tracking_number}</strong>
-                                                                                {' '}and remove its data from our servers.
+                                                                                This action cannot be undone. This will permanently delete the customer{' '}
+                                                                                <strong className='px-1'>{customer.name}</strong>
+                                                                                {' '}and remove their data from our servers.
                                                                             </AlertDialogDescription>
                                                                         </AlertDialogHeader>
                                                                         <AlertDialogFooter>
                                                                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                                                                             <AlertDialogAction
                                                                                 onClick={() => {
-                                                                                    console.log('Attempting to delete parcel ID:', parcel.id);
+                                                                                    console.log('Attempting to delete customer ID:', customer.id);
                                                                                     // Close the dialog first
                                                                                     setOpen(false);
-                                                                                    // Then delete the parcel
-                                                                                    router.delete(route('parcels.destroy', parcel.id), {
+                                                                                    // Then delete the customer
+                                                                                    router.delete(route('customers.destroy', customer.id), {
                                                                                         preserveScroll: true
                                                                                     });
                                                                                 }}
                                                                                 className='bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600'
                                                                             >
-                                                                                Yes, delete parcel
+                                                                                Yes, delete customer
                                                                             </AlertDialogAction>
                                                                         </AlertDialogFooter>
                                                                     </AlertDialogContent>
@@ -199,8 +162,8 @@ export default function ParcelsIndex({ parcels }: ParcelsIndexProps) {
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="text-center">
-                                            No parcels found.
+                                        <TableCell colSpan={5} className="text-center">
+                                            No customers found.
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -210,30 +173,12 @@ export default function ParcelsIndex({ parcels }: ParcelsIndexProps) {
                 </Card>
 
                 {/* Pagination Links */}
-                {parcels.links.length > 3 && (
+                {customers.links && customers.links.length > 3 && (
                     <div className="mt-6 flex justify-center">
-                        <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                            {parcels.links.map((link, index) => (
-                                <Link
-                                    key={index}
-                                    href={link.url || '#'}
-                                    className={cn(
-                                        'relative inline-flex items-center px-4 py-2 border text-sm font-medium',
-                                        link.active
-                                            ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600 dark:bg-indigo-900 dark:border-indigo-700 dark:text-indigo-300'
-                                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700',
-                                        { 'cursor-not-allowed opacity-50': !link.url }
-                                    )}
-                                    dangerouslySetInnerHTML={{ __html: link.label }}
-                                    preserveScroll
-                                    as={link.url ? 'a' : 'span'} // Render as 'a' if URL exists, else 'span'
-                                />
-                            ))}
-                        </nav>
+                        <Pagination links={customers.links} />
                     </div>
                 )}
             </div>
-            {/* Removed the shared AlertDialog - now using inline AlertDialog in each dropdown */}
         </AppLayout>
     );
 }

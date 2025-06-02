@@ -44,6 +44,18 @@ export interface User {
     [key: string]: unknown; // This allows for additional properties...
 }
 
+export interface Customer {
+    id: number;
+    name: string;
+    address: string;
+    phone_number: string | null;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+    parcels?: Parcel[];
+    [key: string]: unknown;
+}
+
 export interface Parcel {
     id: number;
     tracking_number: string;

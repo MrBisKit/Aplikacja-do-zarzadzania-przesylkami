@@ -15,6 +15,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('parcels/{parcel}/label', [ParcelController::class, 'generateLabel'])->name('parcels.label');
     Route::resource('parcels', ParcelController::class);
+    
+    // Customer management routes
+    Route::resource('customers', App\Http\Controllers\CustomerController::class);
 });
 
 

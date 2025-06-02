@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Package } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Package, Users } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -19,6 +19,12 @@ const mainNavItems: NavItem[] = [
         href: route('parcels.index'),
         icon: Package,
         routeName: 'parcels.index',
+    },
+    {
+        title: 'Customers',
+        href: route('customers.index'),
+        icon: Users,
+        routeName: 'customers.index',
     },
 ];
 

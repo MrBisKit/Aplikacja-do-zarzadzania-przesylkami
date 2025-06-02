@@ -33,13 +33,20 @@ interface UserOption {
     name: string;
 }
 
+interface CustomerOption {
+    id: number;
+    name: string;
+    address: string;
+    phone_number: string | null;
+}
+
 interface ParcelCreateProps {
     statuses: string[];
     couriers: UserOption[];
-    // customers: UserOption[]; // For customer selection later
+    customers: CustomerOption[];
 }
 
-export default function ParcelCreate({ statuses, couriers }: ParcelCreateProps) {
+export default function ParcelCreate({ statuses, couriers, customers }: ParcelCreateProps) {
     const { data, setData, post, processing, errors, reset, transform } = useForm<Omit<ParcelFormData, 'tracking_number'>>({
         // tracking_number: '', // Removed, will be auto-generated
         sender_name: '',
@@ -59,7 +66,25 @@ export default function ParcelCreate({ statuses, couriers }: ParcelCreateProps) 
     transform((formData) => ({
         ...formData,
         user_id: formData.user_id === '0' ? '' : formData.user_id,
+        customer_id: formData.customer_id === '0' ? '' : formData.customer_id,
     }));
+    
+    // Handle customer selection and auto-populate sender details
+    function handleCustomerChange(customerId: string) {
+        setData('customer_id', customerId);
+        
+        if (customerId && customerId !== '0') {
+            const selectedCustomer = customers.find(c => c.id.toString() === customerId);
+            if (selectedCustomer) {
+                setData({
+                    ...data,
+                    customer_id: customerId,
+                    sender_name: selectedCustomer.name,
+                    sender_address: selectedCustomer.address,
+                });
+            }
+        }
+    }
 
     function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -102,6 +127,36 @@ export default function ParcelCreate({ statuses, couriers }: ParcelCreateProps) 
                                             </SelectContent>
                                         </Select>
                                         {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                    <div>
+                                        <Label htmlFor="customer_id">Select Customer</Label>
+                                        <Select value={data.customer_id} onValueChange={handleCustomerChange}>
+                                            <SelectTrigger id="customer_id">
+                                                <SelectValue placeholder="Select customer" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="0">None (Manual Entry)</SelectItem>
+                                                {customers.map((customer) => (
+                                                    <SelectItem key={customer.id} value={customer.id.toString()}>
+                                                        {customer.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.customer_id && <p className="mt-1 text-xs text-red-500">{errors.customer_id}</p>}
+                                    </div>
+                                    <div className="flex items-center justify-end">
+                                        <Button 
+                                            type="button" 
+                                            variant="outline" 
+                                            size="sm"
+                                            onClick={() => window.open(route('customers.create'), '_blank')}
+                                        >
+                                            Add New Customer
+                                        </Button>
                                     </div>
                                 </div>
 

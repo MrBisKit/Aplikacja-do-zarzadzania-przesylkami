@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Parcel;
 use App\Models\User;
+use App\Models\Customer;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Milon\Barcode\Facades\DNS1DFacade;
 use Illuminate\Http\Request;
@@ -34,10 +35,12 @@ class ParcelController extends Controller
     {
         $statuses = ['pending', 'in_transit', 'out_for_delivery', 'delivered', 'failed_attempt', 'cancelled', 'returned'];
         $couriers = User::where('role', 'courier')->select('id', 'name')->get(); // Assuming 'courier' is the role identifier
+        $customers = Customer::select('id', 'name', 'address', 'phone_number')->get();
         
         return Inertia::render('parcels/create', [
             'statuses' => $statuses,
             'couriers' => $couriers,
+            'customers' => $customers,
         ]);
     }
 
@@ -59,7 +62,7 @@ class ParcelController extends Controller
             'dimensions' => 'nullable|string|max:100',
             'notes' => 'nullable|string',
             'user_id' => 'nullable|exists:users,id', // Courier ID
-            'customer_id' => 'required|exists:users,id', // Assuming customer is also a user for now
+            'customer_id' => 'nullable|exists:customers,id' // Customer ID
         ]);
 
         // Generate unique tracking number
