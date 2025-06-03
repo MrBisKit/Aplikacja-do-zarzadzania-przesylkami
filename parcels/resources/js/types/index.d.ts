@@ -75,6 +75,7 @@ export interface Parcel {
     courier?: User | null;
     customer?: Customer | null;
     history?: ParcelHistory[];
+    available_couriers?: User[]; // Available couriers for assignment
 }
 
 export interface ParcelHistory {

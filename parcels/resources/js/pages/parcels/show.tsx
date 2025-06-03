@@ -10,13 +10,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { ArrowLeftIcon, Loader2, Pencil, ClockIcon, TruckIcon, AlertCircle } from 'lucide-react';
-import { Parcel } from '@/types';
+import { Parcel, User, ParcelHistory } from '@/types';
 import { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface ParcelShowProps {
     parcel: Parcel;
     statuses: string[];
+    availableCouriers: User[];
 }
 
 // Helper function to format date strings
@@ -33,7 +34,7 @@ const formatStatus = (status: string) => {
     return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 };
 
-export default function ParcelShow({ parcel, statuses }: ParcelShowProps) {
+export default function ParcelShow({ parcel, statuses, availableCouriers }: ParcelShowProps) {
     const breadcrumbs = [
         { title: 'Parcels', href: route('parcels.index') },
         { title: `Details for ${parcel.tracking_number}`, href: route('parcels.show', parcel.id) },
@@ -41,10 +42,12 @@ export default function ParcelShow({ parcel, statuses }: ParcelShowProps) {
 
     const [isGeneratingLabel, setIsGeneratingLabel] = useState(false);
     const [statusPopoverOpen, setStatusPopoverOpen] = useState(false);
+    const [courierPopoverOpen, setCourierPopoverOpen] = useState(false);
     
     const { data, setData, put, processing, errors, reset } = useForm({
         status: parcel.status,
         history_note: '',
+        user_id: 'none', // Default to 'none' for unassigning
     });
     
     function handleSubmit(e: React.FormEvent) {
@@ -52,6 +55,21 @@ export default function ParcelShow({ parcel, statuses }: ParcelShowProps) {
         put(route('parcels.updateStatus', parcel.id), {
             onSuccess: () => {
                 setStatusPopoverOpen(false);
+                reset();
+            },
+        });
+    }
+
+    // Handle courier assignment form submission
+    function handleCourierAssign(e: React.FormEvent) {
+        e.preventDefault();
+        setCourierPopoverOpen(false);
+        
+        // Make sure user_id is properly set
+        setData('user_id', data.user_id || 'none');
+        
+        put(route('parcels.assignCourier', parcel.id), {
+            onSuccess: () => {
                 reset();
             },
         });
@@ -189,7 +207,117 @@ export default function ParcelShow({ parcel, statuses }: ParcelShowProps) {
                             </div>
                             <div>
                                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Assigned Courier</h3>
-                                <p className="mt-1 text-base">{parcel.courier?.name || 'Not assigned'}</p>
+                                <div className="flex items-center mt-1 space-x-2">
+                                    <p className="text-base">{parcel.courier?.name || 'Not assigned'}</p>
+                                    {!parcel.courier && (
+                                        <Popover open={courierPopoverOpen} onOpenChange={setCourierPopoverOpen}>
+                                            <PopoverTrigger asChild>
+                                                <Button variant="outline" size="sm">
+                                                    Assign Courier
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-80 p-0" align="start">
+                                                <div className="p-4 border-b">
+                                                    <h4 className="font-medium">Assign Courier</h4>
+                                                    <p className="text-sm text-muted-foreground mt-1">
+                                                        Assign a courier to handle this parcel
+                                                    </p>
+                                                </div>
+                                                <form onSubmit={handleCourierAssign} className="p-4 space-y-4">
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="user_id">Select Courier</Label>
+                                                        <Select 
+                                                            value={data.user_id || ''} 
+                                                            onValueChange={(value) => setData('user_id', value)}
+                                                        >
+                                                            <SelectTrigger id="user_id">
+                                                                <SelectValue placeholder="Select courier" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {/* Couriers passed from the controller */}
+                                                                {availableCouriers.map((courier: User) => (
+                                                                    <SelectItem key={courier.id} value={String(courier.id)}>
+                                                                        {courier.name}
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        {errors.user_id && <p className="mt-1 text-xs text-red-500">{errors.user_id}</p>}
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <Button 
+                                                            type="button" 
+                                                            variant="outline" 
+                                                            onClick={() => setCourierPopoverOpen(false)}
+                                                        >
+                                                            Cancel
+                                                        </Button>
+                                                        <Button 
+                                                            type="submit"
+                                                            disabled={processing || !data.user_id}
+                                                        >
+                                                            {processing ? 'Saving...' : 'Assign'}
+                                                        </Button>
+                                                    </div>
+                                                </form>
+                                            </PopoverContent>
+                                        </Popover>
+                                    )}
+                                    {parcel.courier && (
+                                        <Popover open={courierPopoverOpen} onOpenChange={setCourierPopoverOpen}>
+                                            <PopoverTrigger asChild>
+                                                <Button variant="outline" size="sm">
+                                                    Change Courier
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-80 p-0" align="start">
+                                                <div className="p-4 border-b">
+                                                    <h4 className="font-medium">Change Assigned Courier</h4>
+                                                    <p className="text-sm text-muted-foreground mt-1">
+                                                        Current courier: <span className="font-medium">{parcel.courier.name}</span>
+                                                    </p>
+                                                </div>
+                                                <form onSubmit={handleCourierAssign} className="p-4 space-y-4">
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="user_id">Select New Courier</Label>
+                                                        <Select 
+                                                            value={data.user_id || ''} 
+                                                            onValueChange={(value) => setData('user_id', value)}
+                                                        >
+                                                            <SelectTrigger id="user_id">
+                                                                <SelectValue placeholder="Select courier" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="none">None (Unassign)</SelectItem>
+                                                                {availableCouriers.map((courier: User) => (
+                                                                    <SelectItem key={courier.id} value={String(courier.id)}>
+                                                                        {courier.name}
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        {errors.user_id && <p className="mt-1 text-xs text-red-500">{errors.user_id}</p>}
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <Button 
+                                                            type="button" 
+                                                            variant="outline" 
+                                                            onClick={() => setCourierPopoverOpen(false)}
+                                                        >
+                                                            Cancel
+                                                        </Button>
+                                                        <Button 
+                                                            type="submit"
+                                                            disabled={processing}
+                                                        >
+                                                            {processing ? 'Saving...' : 'Update'}
+                                                        </Button>
+                                                    </div>
+                                                </form>
+                                            </PopoverContent>
+                                        </Popover>
+                                    )}
+                                </div>
                             </div>
                             <div>
                                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Customer</h3>

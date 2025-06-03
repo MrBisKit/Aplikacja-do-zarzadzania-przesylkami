@@ -90,9 +90,13 @@ class ParcelController extends Controller
         
         $statuses = ['pending', 'in_transit', 'out_for_delivery', 'delivered', 'failed_attempt', 'cancelled', 'returned'];
         
+        // Get available couriers (users with courier role)
+        $availableCouriers = User::where('role', 'courier')->get(['id', 'name']);
+        
         return Inertia::render('parcels/show', [
             'parcel' => $parcel,
             'statuses' => $statuses,
+            'availableCouriers' => $availableCouriers,
         ]);
     }
 
@@ -198,6 +202,41 @@ class ParcelController extends Controller
         return redirect()->route('parcels.show', $parcel->id)
             ->with('info', 'Status unchanged.');
     }
+    
+    /**
+     * Assign or change courier for a parcel
+     */
+    public function assignCourier(Request $request, Parcel $parcel)
+    {
+        $validated = $request->validate([
+            'user_id' => ['required', 'string', function ($attribute, $value, $fail) {
+                if ($value !== 'none' && !User::where('id', $value)->exists()) {
+                    $fail('The selected courier is invalid.');
+                }
+            }],
+        ]);
+        
+        $oldCourierId = $parcel->user_id;
+        $newCourierId = ($validated['user_id'] === 'none') ? null : $validated['user_id'];
+        $courierChanged = $oldCourierId !== $newCourierId;
+        
+        if ($courierChanged) {
+            $parcel->update(['user_id' => $newCourierId]);
+            
+            // Add a history entry for courier assignment/change
+            $oldCourierName = $oldCourierId ? User::find($oldCourierId)->name : 'None';
+            $newCourierName = $newCourierId ? User::find($newCourierId)->name : 'None';
+            
+            $parcel->history()->create([
+                'old_status' => $parcel->status, // Status didn't change
+                'new_status' => $parcel->status,
+                'user_id' => auth()->id(),
+                'notes' => "Courier changed from {$oldCourierName} to {$newCourierName}",
+            ]);
+        }
+        
+        return redirect()->back()->with($courierChanged ? 'success' : 'info', $courierChanged ? 'Courier assigned successfully.' : 'No courier change detected.');
+    }
 
     /**
      * Remove the specified resource from storage.
@@ -253,23 +292,41 @@ class ParcelController extends Controller
 
     /**
      * Provide public tracking information for a parcel.
+     * Redirects to parcel show page for authenticated users or returns JSON for API requests.
      *
      * @param  string  $tracking_number
-     * @return \Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\Response
      */
     public function trackPublic($tracking_number)
     {
         $parcel = \App\Models\Parcel::where('tracking_number', $tracking_number)->first();
 
         if (!$parcel) {
-            return response()->json(['message' => 'Parcel not found.'], 404);
+            if (request()->expectsJson()) {
+                return response()->json(['message' => 'Parcel not found.'], 404);
+            }
+            return redirect()->route('home')->with('error', 'Parcel not found.');
         }
-
+        
+        // If this is a barcode scanner request or browser request, redirect to the parcel page
+        if (request()->header('X-Inertia') || !request()->expectsJson()) {
+            // For authenticated users, redirect to the parcel show page
+            if (auth()->check()) {
+                return redirect()->route('parcels.show', $parcel->id);
+            }
+            
+            // For unauthenticated users, redirect to login with a return URL
+            return redirect()->route('login')
+                ->with('message', 'Please log in to view parcel details.')
+                ->with('intended_url', route('parcels.show', $parcel->id));
+        }
+        
+        // For API requests, return JSON response
         return response()->json([
             'tracking_number' => $parcel->tracking_number,
             'status' => $parcel->status,
             'weight' => $parcel->weight,
-            'dimensions' => $parcel->dimensions, // Assuming dimensions is a string like 'LxWxH'
+            'dimensions' => $parcel->dimensions,
             'created_at' => $parcel->created_at->toIso8601String(),
             'updated_at' => $parcel->updated_at->toIso8601String(),
         ]);

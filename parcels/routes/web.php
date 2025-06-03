@@ -15,6 +15,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('parcels/{parcel}/label', [ParcelController::class, 'generateLabel'])->name('parcels.label');
     Route::put('parcels/{parcel}/status', [ParcelController::class, 'updateStatus'])->name('parcels.updateStatus');
+    Route::put('parcels/{parcel}/assign-courier', [ParcelController::class, 'assignCourier'])->name('parcels.assignCourier');
     Route::resource('parcels', ParcelController::class);
     
     // Customer management routes
