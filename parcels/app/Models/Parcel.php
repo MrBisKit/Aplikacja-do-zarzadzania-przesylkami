@@ -39,4 +39,12 @@ class Parcel extends Model
     {
         return $this->belongsTo(Customer::class, 'customer_id');
     }
+
+    /**
+     * Get the history records for this parcel.
+     */
+    public function history()
+    {
+        return $this->hasMany(ParcelHistory::class)->orderBy('created_at', 'desc');
+    }
 }

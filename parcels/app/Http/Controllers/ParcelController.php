@@ -84,9 +84,15 @@ class ParcelController extends Controller
      */
     public function show(Parcel $parcel)
     {
-        $parcel->load(['courier', 'customer']);
+        $parcel->load(['courier', 'customer', 'history' => function($query) {
+            $query->with('user')->latest()->take(10);
+        }]);
+        
+        $statuses = ['pending', 'in_transit', 'out_for_delivery', 'delivered', 'failed_attempt', 'cancelled', 'returned'];
+        
         return Inertia::render('parcels/show', [
             'parcel' => $parcel,
+            'statuses' => $statuses,
         ]);
     }
 
@@ -95,7 +101,20 @@ class ParcelController extends Controller
      */
     public function edit(Parcel $parcel)
     {
-        //
+        $parcel->load(['courier', 'customer', 'history' => function($query) {
+            $query->with('user')->latest()->take(10);
+        }]);
+        
+        $statuses = ['pending', 'in_transit', 'out_for_delivery', 'delivered', 'failed_attempt', 'cancelled', 'returned'];
+        $couriers = User::where('role', 'courier')->select('id', 'name')->get();
+        $customers = Customer::select('id', 'name', 'address', 'phone_number')->get();
+        
+        return Inertia::render('parcels/edit', [
+            'parcel' => $parcel,
+            'statuses' => $statuses,
+            'couriers' => $couriers,
+            'customers' => $customers,
+        ]);
     }
 
     /**
@@ -103,7 +122,81 @@ class ParcelController extends Controller
      */
     public function update(Request $request, Parcel $parcel)
     {
-        //
+        $validated = $request->validate([
+            'sender_name' => 'required|string|max:255',
+            'sender_address' => 'required|string',
+            'recipient_name' => 'required|string|max:255',
+            'recipient_address' => 'required|string',
+            'recipient_phone' => 'nullable|string|max:50',
+            'status' => ['required', 'string', Rule::in(['pending', 'in_transit', 'out_for_delivery', 'delivered', 'failed_attempt', 'cancelled', 'returned'])],
+            'weight' => 'nullable|numeric|min:0',
+            'dimensions' => 'nullable|string|max:100',
+            'notes' => 'nullable|string',
+            'user_id' => 'nullable|exists:users,id', // Courier ID
+            'customer_id' => 'nullable|exists:customers,id', // Customer ID
+            'history_note' => 'nullable|string|max:255', // Note for status change history
+        ]);
+        
+        // Extract history note and remove it from validated data
+        $historyNote = $validated['history_note'] ?? null;
+        unset($validated['history_note']);
+        
+        // Check if status has changed
+        $oldStatus = $parcel->status;
+        $newStatus = $validated['status'];
+        $statusChanged = $oldStatus !== $newStatus;
+        
+        // Update the parcel
+        $parcel->update($validated);
+        
+        // Create history record if status changed
+        if ($statusChanged) {
+            $parcel->history()->create([
+                'old_status' => $oldStatus,
+                'new_status' => $newStatus,
+                'user_id' => auth()->id(),
+                'notes' => $historyNote,
+            ]);
+        }
+        
+        return redirect()->route('parcels.show', $parcel->id)
+            ->with('success', 'Parcel updated successfully.');
+    }
+    
+    /**
+     * Update only the status of the parcel.
+     */
+    public function updateStatus(Request $request, Parcel $parcel)
+    {
+        $validated = $request->validate([
+            'status' => ['required', 'string', Rule::in(['pending', 'in_transit', 'out_for_delivery', 'delivered', 'failed_attempt', 'cancelled', 'returned'])],
+            'history_note' => 'nullable|string|max:255',
+        ]);
+        
+        // Check if status has changed
+        $oldStatus = $parcel->status;
+        $newStatus = $validated['status'];
+        $statusChanged = $oldStatus !== $newStatus;
+        
+        if ($statusChanged) {
+            // Update the parcel status
+            $parcel->status = $newStatus;
+            $parcel->save();
+            
+            // Create history record
+            $parcel->history()->create([
+                'old_status' => $oldStatus,
+                'new_status' => $newStatus,
+                'user_id' => auth()->id(),
+                'notes' => $validated['history_note'] ?? null,
+            ]);
+            
+            return redirect()->route('parcels.show', $parcel->id)
+                ->with('success', 'Parcel status updated successfully.');
+        }
+        
+        return redirect()->route('parcels.show', $parcel->id)
+            ->with('info', 'Status unchanged.');
     }
 
     /**

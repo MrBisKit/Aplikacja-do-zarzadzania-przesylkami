@@ -45,7 +45,7 @@ export default function CustomerCreate() {
             <Head title="Add New Customer" />
 
             <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Add New Customer</h1>
                     <Link href={route('customers.index')}>
                         <Button variant="outline" size="default">
@@ -82,7 +82,7 @@ export default function CustomerCreate() {
                                     {errors.address && <p className="mt-1 text-xs text-red-500">{errors.address}</p>}
                                 </div>
 
-                                <div>
+                                <div className="mb-6">
                                     <Label htmlFor="phone_number">Phone Number</Label>
                                     <Input
                                         id="phone_number"

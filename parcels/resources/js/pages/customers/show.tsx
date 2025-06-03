@@ -29,21 +29,22 @@ export default function CustomerShow({ customer }: CustomerShowProps) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Customer: ${customer.name}`} />
-
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    <div className="mb-6 flex justify-between items-center">
-                        <Link href={route('customers.index')}>
-                            <Button variant="outline" size="sm">
-                                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Customers
-                            </Button>
-                        </Link>
+            <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
+                <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Customer: {customer.name}</h1>
+                    <div className="ml-auto flex gap-4">
                         <Link href={route('customers.edit', customer.id)}>
                             <Button>
                                 <Pencil className="mr-2 h-4 w-4" /> Edit Customer
                             </Button>
                         </Link>
+                        <Link href={route('customers.index')}>
+                            <Button variant="outline" size="default">
+                                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Customers
+                            </Button>
+                        </Link>
                     </div>
+                </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {/* Customer Details Card */}
@@ -146,7 +147,6 @@ export default function CustomerShow({ customer }: CustomerShowProps) {
                         </Card>
                     </div>
                 </div>
-            </div>
         </AppLayout>
     );
 }

@@ -74,7 +74,7 @@ export default function ParcelsIndex({ parcels }: ParcelsIndexProps) {
         <AppLayout title="Parcels" breadcrumbs={breadcrumbs}>
             <Head title="Parcels" />
             <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Parcels</h1>
                     <Link href={route('parcels.create')}>
                         <Button>
@@ -83,7 +83,7 @@ export default function ParcelsIndex({ parcels }: ParcelsIndexProps) {
                     </Link>
                 </div>
 
-                <Card className="shadow-lg">
+                <Card>
                     <CardHeader>
                         <CardTitle>Parcel List</CardTitle>
                         <CardDescription>

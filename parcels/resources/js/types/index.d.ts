@@ -73,7 +73,20 @@ export interface Parcel {
     created_at: string;
     updated_at: string;
     courier?: User | null;
-    customer?: User | null;
+    customer?: Customer | null;
+    history?: ParcelHistory[];
+}
+
+export interface ParcelHistory {
+    id: number;
+    parcel_id: number;
+    old_status: string | null;
+    new_status: string;
+    user_id: number | null;
+    notes: string | null;
+    created_at: string;
+    updated_at: string;
+    user?: User | null;
 }
 
 export interface PaginatedData<T> {

@@ -48,7 +48,7 @@ interface ParcelCreateProps {
 }
 
 export default function ParcelCreate({ statuses, couriers, customers }: ParcelCreateProps) {
-    const { data, setData, post, processing, errors, reset, transform } = useForm<Omit<ParcelFormData, 'tracking_number'>>({
+    const { data, setData, post, processing, errors, reset, transform, setError, clearErrors } = useForm<Omit<ParcelFormData, 'tracking_number'>>({
         // tracking_number: '', // Removed, will be auto-generated
         sender_name: '',
         sender_address: '',
@@ -71,15 +71,18 @@ export default function ParcelCreate({ statuses, couriers, customers }: ParcelCr
     }));
     
     // Handle customer selection and auto-populate sender details
-    function handleCustomerChange(customerId: string) {
-        setData('customer_id', customerId);
+    function handleCustomerChange(value: string) {
+        setData('customer_id', value === 'manual' ? '' : value);
         
-        if (customerId && customerId !== '0') {
-            const selectedCustomer = customers.find(c => c.id.toString() === customerId);
+        // If a valid customer is selected, auto-fill sender details
+        if (value !== 'manual') {
+            const customerId = parseInt(value);
+            const selectedCustomer = customers.find(c => c.id === customerId);
+            
             if (selectedCustomer) {
                 setData({
                     ...data,
-                    customer_id: customerId,
+                    customer_id: value,
                     sender_name: selectedCustomer.name,
                     sender_address: selectedCustomer.address,
                 });
@@ -87,11 +90,77 @@ export default function ParcelCreate({ statuses, couriers, customers }: ParcelCr
         }
     }
 
+    // Form validation
+    const validateForm = (): boolean => {
+        let isValid = true;
+        const formErrors: Record<string, string> = {};
+        
+        // Required fields validation
+        if (!data.status) {
+            formErrors.status = 'Status is required';
+            isValid = false;
+        }
+        
+        if (!data.sender_name) {
+            formErrors.sender_name = 'Sender name is required';
+            isValid = false;
+        }
+        
+        if (!data.sender_address) {
+            formErrors.sender_address = 'Sender address is required';
+            isValid = false;
+        }
+        
+        if (!data.recipient_name) {
+            formErrors.recipient_name = 'Recipient name is required';
+            isValid = false;
+        }
+        
+        if (!data.recipient_address) {
+            formErrors.recipient_address = 'Recipient address is required';
+            isValid = false;
+        }
+        
+        // Format validation
+        if (data.dimensions && !/^\d+x\d+x\d+$|^\d+x\d+x\d+\s+\w+$/.test(data.dimensions)) {
+            formErrors.dimensions = 'Dimensions must be in format: LxWxH (e.g. 30x20x15)';
+            isValid = false;
+        }
+        
+        if (data.weight && (isNaN(Number(data.weight)) || Number(data.weight) <= 0)) {
+            formErrors.weight = 'Weight must be a positive number';
+            isValid = false;
+        }
+        
+        if (data.recipient_phone && !/^\+?[\d\s-()]+$/.test(data.recipient_phone)) {
+            formErrors.recipient_phone = 'Please enter a valid phone number';
+            isValid = false;
+        }
+        
+        // Set errors if any
+        if (!isValid) {
+            // With Inertia's useForm, we don't need to manually set errors
+            // They will be set automatically from the server response
+            // We'll use clearErrors and setError from useForm instead
+            clearErrors();
+            Object.entries(formErrors).forEach(([key, value]) => {
+                setError(key as any, value);
+            });
+        }
+        
+        return isValid;
+    };
+    
+    // Handle form submission
     function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        post(route('parcels.store'), {
-            onSuccess: () => reset(), // Reset form on success
-        });
+        
+        // Client-side validation before submission
+        if (validateForm()) {
+            post(route('parcels.store'), {
+                onSuccess: () => reset(), // Reset form on success
+            });
+        }
     }
 
     return (
@@ -104,7 +173,7 @@ export default function ParcelCreate({ statuses, couriers, customers }: ParcelCr
             <Head title="Add New Parcel" />
 
             <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Add New Parcel</h1>
                     <Link href={route('parcels.index')}>
                             <Button variant="outline" size="default">
@@ -119,35 +188,34 @@ export default function ParcelCreate({ statuses, couriers, customers }: ParcelCr
                         </CardHeader>
                         <form onSubmit={handleSubmit}>
                             <CardContent className="space-y-6">
+                                {/* Status */}
                                 <div>
-                                    {/* Tracking Number input removed, will be auto-generated */}
-                                    <div>
-                                        <Label htmlFor="status">Status*</Label>
-                                        <Select value={data.status} onValueChange={(value) => setData('status', value)}>
-                                            <SelectTrigger id="status">
-                                                <SelectValue placeholder="Select status" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {statuses.map((statusOption) => (
-                                                    <SelectItem key={statusOption} value={statusOption}>
-                                                        {statusOption.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
-                                    </div>
+                                    <Label htmlFor="status">Status*</Label>
+                                    <Select value={data.status} onValueChange={(value) => setData('status', value)}>
+                                        <SelectTrigger id="status">
+                                            <SelectValue placeholder="Select status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {statuses.map((statusOption) => (
+                                                <SelectItem key={statusOption} value={statusOption}>
+                                                    {statusOption.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {errors.status && <p className="mt-1 text-xs text-red-500">{errors.status}</p>}
                                 </div>
 
+                                {/* Customer Selection */}
                                 <div className="flex gap-6 items-end">
                                     <div className="w-1/2">
-                                        <Label htmlFor="customer_id">Select Customer</Label>
+                                        <Label htmlFor="customer_id">Customer</Label>
                                         <Select value={data.customer_id} onValueChange={handleCustomerChange}>
                                             <SelectTrigger id="customer_id">
                                                 <SelectValue placeholder="Select customer" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="0">None (Manual Entry)</SelectItem>
+                                                <SelectItem value="manual">None (Manual Entry)</SelectItem>
                                                 {customers.map((customer) => (
                                                     <SelectItem key={customer.id} value={customer.id.toString()}>
                                                         {customer.name}
@@ -158,129 +226,138 @@ export default function ParcelCreate({ statuses, couriers, customers }: ParcelCr
                                         {errors.customer_id && <p className="mt-1 text-xs text-red-500">{errors.customer_id}</p>}
                                     </div>
                                     <div className="flex items-center justify-end">
-                                        <Button 
-                                            type="button" 
-                                            variant="outline" 
-                                            size="default"
-                                            onClick={() => window.open(route('customers.create'), '_blank')}
-                                        >
-                                            Add New Customer
-                                        </Button>
+                                        <Link href={route('customers.create')} target="_blank">
+                                            <Button 
+                                                type="button" 
+                                                variant="outline" 
+                                                size="default"
+                                            >
+                                                Add New Customer
+                                            </Button>
+                                        </Link>
                                     </div>
                                 </div>
 
-                                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Sender Details</h3>
-                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                    <div>
-                                        <Label htmlFor="sender_name">Sender Name*</Label>
-                                        <Input
-                                            id="sender_name"
-                                            value={data.sender_name}
-                                            onChange={(e) => setData('sender_name', e.target.value)}
-                                        />
-                                        {errors.sender_name && <p className="mt-1 text-xs text-red-500">{errors.sender_name}</p>}
-                                    </div>
-                                </div>
+                                {/* Sender Information */}
                                 <div>
-                                    <Label htmlFor="sender_address">Sender Address*</Label>
-                                    <Textarea
-                                        id="sender_address"
-                                        value={data.sender_address}
-                                        onChange={(e) => setData('sender_address', e.target.value)}
-                                    />
-                                    {errors.sender_address && <p className="mt-1 text-xs text-red-500">{errors.sender_address}</p>}
+                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Sender Details</h3>
+                                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                        <div>
+                                            <Label htmlFor="sender_name">Sender Name*</Label>
+                                            <Input
+                                                id="sender_name"
+                                                value={data.sender_name}
+                                                onChange={(e) => setData('sender_name', e.target.value)}
+                                            />
+                                            {errors.sender_name && <p className="mt-1 text-xs text-red-500">{errors.sender_name}</p>}
+                                        </div>
+                                    </div>
+                                    <div className="mt-4">
+                                        <Label htmlFor="sender_address">Sender Address*</Label>
+                                        <Textarea
+                                            id="sender_address"
+                                            value={data.sender_address}
+                                            onChange={(e) => setData('sender_address', e.target.value)}
+                                            rows={3}
+                                        />
+                                        {errors.sender_address && <p className="mt-1 text-xs text-red-500">{errors.sender_address}</p>}
+                                    </div>
                                 </div>
 
-                                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Recipient Details</h3>
-                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                    <div>
-                                        <Label htmlFor="recipient_name">Recipient Name*</Label>
-                                        <Input
-                                            id="recipient_name"
-                                            value={data.recipient_name}
-                                            onChange={(e) => setData('recipient_name', e.target.value)}
-                                        />
-                                        {errors.recipient_name && <p className="mt-1 text-xs text-red-500">{errors.recipient_name}</p>}
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="recipient_phone">Recipient Phone</Label>
-                                        <Input
-                                            id="recipient_phone"
-                                            value={data.recipient_phone}
-                                            onChange={(e) => setData('recipient_phone', e.target.value)}
-                                        />
-                                        {errors.recipient_phone && <p className="mt-1 text-xs text-red-500">{errors.recipient_phone}</p>}
-                                    </div>
-                                </div>
+                                {/* Recipient Information */}
                                 <div>
-                                    <Label htmlFor="recipient_address">Recipient Address*</Label>
-                                    <Textarea
-                                        id="recipient_address"
-                                        value={data.recipient_address}
-                                        onChange={(e) => setData('recipient_address', e.target.value)}
-                                    />
-                                    {errors.recipient_address && <p className="mt-1 text-xs text-red-500">{errors.recipient_address}</p>}
+                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Recipient Details</h3>
+                                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                        <div>
+                                            <Label htmlFor="recipient_name">Recipient Name*</Label>
+                                            <Input
+                                                id="recipient_name"
+                                                value={data.recipient_name}
+                                                onChange={(e) => setData('recipient_name', e.target.value)}
+                                            />
+                                            {errors.recipient_name && <p className="mt-1 text-xs text-red-500">{errors.recipient_name}</p>}
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="recipient_phone">Recipient Phone</Label>
+                                            <Input
+                                                id="recipient_phone"
+                                                value={data.recipient_phone}
+                                                onChange={(e) => setData('recipient_phone', e.target.value)}
+                                            />
+                                            {errors.recipient_phone && <p className="mt-1 text-xs text-red-500">{errors.recipient_phone}</p>}
+                                        </div>
+                                    </div>
+                                    <div className="mt-4">
+                                        <Label htmlFor="recipient_address">Recipient Address*</Label>
+                                        <Textarea
+                                            id="recipient_address"
+                                            value={data.recipient_address}
+                                            onChange={(e) => setData('recipient_address', e.target.value)}
+                                            rows={3}
+                                        />
+                                        {errors.recipient_address && <p className="mt-1 text-xs text-red-500">{errors.recipient_address}</p>}
+                                    </div>
                                 </div>
 
-                                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Parcel Information</h3>
-                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                    <div>
-                                        <Label htmlFor="weight">Weight (kg)</Label>
-                                        <Input
-                                            id="weight"
-                                            type="number"
-                                            value={data.weight}
-                                            onChange={(e) => setData('weight', e.target.value)}
-                                        />
-                                        {errors.weight && <p className="mt-1 text-xs text-red-500">{errors.weight}</p>}
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="dimensions">Dimensions (e.g., 30x20x10 cm)</Label>
-                                        <Input
-                                            id="dimensions"
-                                            value={data.dimensions}
-                                            onChange={(e) => setData('dimensions', e.target.value)}
-                                        />
-                                        {errors.dimensions && <p className="mt-1 text-xs text-red-500">{errors.dimensions}</p>}
-                                    </div>
-                                </div>
+                                {/* Parcel Information */}
                                 <div>
-                                    <Label htmlFor="notes">Notes</Label>
-                                    <Textarea
-                                        id="notes"
-                                        value={data.notes}
-                                        onChange={(e) => setData('notes', e.target.value)}
-                                    />
-                                    {errors.notes && <p className="mt-1 text-xs text-red-500">{errors.notes}</p>}
+                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Parcel Information</h3>
+                                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                        <div>
+                                            <Label htmlFor="weight">Weight (kg)</Label>
+                                            <Input
+                                                id="weight"
+                                                type="number"
+                                                step="0.01"
+                                                value={data.weight}
+                                                onChange={(e) => setData('weight', e.target.value)}
+                                            />
+                                            {errors.weight && <p className="mt-1 text-xs text-red-500">{errors.weight}</p>}
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="dimensions">Dimensions (e.g., 30x20x10 cm)</Label>
+                                            <Input
+                                                id="dimensions"
+                                                value={data.dimensions}
+                                                onChange={(e) => setData('dimensions', e.target.value)}
+                                                placeholder="e.g. 30x20x15"
+                                            />
+                                            {errors.dimensions && <p className="mt-1 text-xs text-red-500">{errors.dimensions}</p>}
+                                        </div>
+                                    </div>
+                                    <div className="mt-4">
+                                        <Label htmlFor="notes">Notes</Label>
+                                        <Textarea
+                                            id="notes"
+                                            value={data.notes}
+                                            onChange={(e) => setData('notes', e.target.value)}
+                                            rows={3}
+                                        />
+                                        {errors.notes && <p className="mt-1 text-xs text-red-500">{errors.notes}</p>}
+                                    </div>
                                 </div>
 
-                                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Assignment (Optional)</h3>
-                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 mb-6">
-                                    <div>
-                                        <Label htmlFor="user_id">Courier (Optional)</Label>
-                                        <Select value={data.user_id} onValueChange={(value) => setData('user_id', value)}>
-                                            <SelectTrigger id="user_id">
-                                                <SelectValue placeholder="Select courier" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="0"><em>None</em></SelectItem> {/* Option for unassigned, value '0' */}
-                                                {couriers.map((courier) => (
-                                                    <SelectItem key={courier.id} value={String(courier.id)}>
-                                                        {courier.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        {errors.user_id && <p className="mt-1 text-xs text-red-500">{errors.user_id}</p>}
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="customer_id">Customer ID</Label>
-                                        <Input // Consider changing to Select later
-                                            id="customer_id"
-                                            value={data.customer_id}
-                                            onChange={(e) => setData('customer_id', e.target.value)}
-                                        />
-                                        {errors.customer_id && <p className="mt-1 text-xs text-red-500">{errors.customer_id}</p>}
+                                {/* Assignment */}
+                                <div className='mb-8'>
+                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Assignment</h3>
+                                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                        <div>
+                                            <Label htmlFor="user_id">Assigned Courier</Label>
+                                            <Select value={data.user_id} onValueChange={(value) => setData('user_id', value === 'none' ? '' : value)}>
+                                                <SelectTrigger id="user_id">
+                                                    <SelectValue placeholder="Select courier" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="none"><em>None</em></SelectItem>
+                                                    {couriers.map((courier) => (
+                                                        <SelectItem key={courier.id} value={String(courier.id)}>
+                                                            {courier.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            {errors.user_id && <p className="mt-1 text-xs text-red-500">{errors.user_id}</p>}
+                                        </div>
                                     </div>
                                 </div>
 

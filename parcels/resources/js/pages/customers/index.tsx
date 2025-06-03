@@ -52,7 +52,7 @@ export default function CustomersIndex({ customers }: CustomersIndexProps) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Customers" />
             <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Customers</h1>
                     <Link href={route('customers.create')}>
                         <Button>
